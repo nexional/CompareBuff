@@ -1,0 +1,17 @@
+{
+    // Provide the External Comparison tool path here e.g. Beyond Compare.
+    // Make sure you use the correct path of the binary as it exists
+    // ** WINDOWS **
+    "external_tool_path": "C:\\Program Files\\Beyond Compare 4\\BCompare.exe",
+    // ** MAC-OS **
+    // "external_tool_path": "/usr/local/bin/bcompare",
+    // ** LINUX **
+    // "external_tool_path": "/usr/bin/bcompare",
+
+    // Prefer selection(s) over whole file/buffer content for comparison
+    // Turn it on when you want just selection to be sent for comparison
+    "prefer_selection": true,
+
+    // Show command in view context menu
+    "show_in_context_menu": false,
+}

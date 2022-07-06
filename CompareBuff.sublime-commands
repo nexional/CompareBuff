@@ -1,0 +1,18 @@
+[
+    {
+        "caption": "CompareBuff: compare with...",
+        "command": "compare_buff"
+    },
+    {
+        "caption": "CompareBuff: cofigure external tool path",
+        "command": "compare_buff", "args": { "configure_tool_path": true }
+    },
+    {
+        "caption": "CompareBuff: toggle prefer_selection",
+        "command": "compare_buff", "args": { "toggle_prefer_selection": true }
+    },
+    {
+        "caption": "CompareBuff: toggle show_in_context_menu",
+        "command": "compare_buff", "args": { "toggle_context_menu": true }
+    }
+]
