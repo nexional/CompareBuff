@@ -1,5 +1,6 @@
 import sublime
 import sublime_plugin
+import re
 import os
 import os.path
 import tempfile
@@ -7,6 +8,7 @@ import subprocess
 
 package_icon = u'\U0001F5D7 '
 this_package =  package_icon + 'CompareBuff: '
+package_settings = 'CompareBuff.sublime-settings'
 context_menu_file = os.path.join(sublime.packages_path(), 'CompareBuff', 'Context.sublime-menu')
 context_content = """[
     {
@@ -20,13 +22,13 @@ context_content = """[
 """
 
 def plugin_loaded():
-    settings = sublime.load_settings('CompareBuff.sublime-settings')
+    settings = sublime.load_settings(package_settings)
     settings.clear_on_change('show_in_context_menu')
     settings.add_on_change('show_in_context_menu', implement_context_menu)
 
 def implement_context_menu():
     global context_menu_file, context_content
-    if (sublime.load_settings('CompareBuff.sublime-settings').get('show_in_context_menu')):
+    if (sublime.load_settings(package_settings).get('show_in_context_menu')):
         package_dir = os.path.dirname(context_menu_file)
         if not os.path.exists(package_dir): os.makedirs(package_dir)
         with open(context_menu_file, 'w') as f:
@@ -38,34 +40,34 @@ def implement_context_menu():
 class CompareBuffCommand(sublime_plugin.WindowCommand):
     def run(self, toggle_context_menu=False, toggle_prefer_selection=False, configure_tool_path=False):
         self.curr_win = self.window
-        settings = sublime.load_settings('CompareBuff.sublime-settings')
+        settings = sublime.load_settings(package_settings)
         if True in locals().values():
             if toggle_context_menu:
                 settings.clear_on_change('show_in_context_menu')
                 show_in_context_menu = not settings.get('show_in_context_menu')
                 settings.set('show_in_context_menu', show_in_context_menu)
                 settings.add_on_change('show_in_context_menu', implement_context_menu)
+                sublime.save_settings(package_settings)
                 status = 'enabled' if show_in_context_menu else 'disabled'
                 sublime.message_dialog(this_package + 'Context menu now ' + status)
             elif toggle_prefer_selection:
                 prefer_selection = not settings.get('prefer_selection')
                 settings.set('prefer_selection', prefer_selection)
+                sublime.save_settings(package_settings)
                 status = 'enabled' if prefer_selection else 'disabled'
                 sublime.message_dialog(this_package + 'prefer_selection is now ' + status)
             elif configure_tool_path:
                 external_tool_path = settings.get('external_tool_path')
                 def on_done(path):
-                    path = path.strip()
+                    path = re.sub("""^["']|["']$""", '', path.strip())
                     if path and os.path.exists(path) and os.path.isfile(path):
                         settings.set('external_tool_path', path)
+                        sublime.save_settings(package_settings)
                         sublime.message_dialog(this_package + 'External tool path updated to \'' + path + '\'')
                     else:
                         sublime.error_message(this_package + 'External tool path \'' + path + '\' does not exist')
-                        self.curr_win.show_input_panel('External Comparison tool path:', external_tool_path, on_done, None, None)
-                        return
+                        self.curr_win.show_input_panel('External Comparison tool path:', path, on_done, None, None)
                 self.curr_win.show_input_panel('External Comparison tool path:', external_tool_path, on_done, None, None)
-
-            sublime.save_settings('CompareBuff.sublime-settings')
             return
 
         self.external_tool_path = settings.get('external_tool_path')
