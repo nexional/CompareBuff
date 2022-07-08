@@ -41,6 +41,8 @@ Once you have basic setup, you can invoke the command in few ways:
 This will present a quick panel where you can select other file/buffer to compare against the
 current one. Once you select second file/buffer the external comparison tool will launch using those.
 
+You can also click window label inside panel. It will open that window's views in a new panel for selection. It's useful when you have number of views open.
+
 ## How does it work
 
 Once you launch the command, the package works on the file/buffers as below before sending to tool:
