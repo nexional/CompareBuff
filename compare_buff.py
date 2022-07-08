@@ -119,9 +119,10 @@ class CompareBuffCommand(sublime_plugin.WindowCommand):
                     first_line = view.substr(sublime.Region(0,75)).encode('unicode_escape').decode()
                     view_name = scratch_icon + (first_line + ellipsis_icon if first_line else 'untitled')
                 self.view_list.append('    ' + view_name)
+        self.user_input()
 
+    def user_input(self):
         self.curr_win.show_quick_panel(items=self.view_list, selected_index=-1, on_select=self.on_select)
-
 
     def on_select(self, i):
         if i == -1: return
@@ -132,12 +133,13 @@ class CompareBuffCommand(sublime_plugin.WindowCommand):
             return
 
         if target in sublime.windows():
-            win = self.view_objs[i]
+            win = target
             v_start = i + 1
-            v_end = v_start + (len(win.views()) if win != self.curr_win else len(win.views())-1)
+            offset = len(win.views()) + (-1 if win == self.curr_win else 0)
+            v_end = v_start + offset
             self.view_objs = self.view_objs[v_start:v_end]
             self.view_list = self.view_list[v_start:v_end]
-            self.curr_win.show_quick_panel(items=self.view_list, selected_index=-1, on_select=self.on_select)
+            self.user_input()
             return
 
         sublime.status_message(this_package + 'Opening tool \'' + self.external_tool_name + '\' for comparison...')
