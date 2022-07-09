@@ -135,12 +135,14 @@ class CompareBuffCommand(sublime_plugin.WindowCommand):
             return
 
         if target in sublime.windows():
-            win = target
+            if not target.views():
+                sublime.error_message('window has no open views')
+                return
             v_start = i + 1
-            offset = len(win.views()) + (-1 if win == self.curr_win else 0)
+            offset = len(target.views()) - (1 if target == self.curr_win else 0)
             v_end = v_start + offset
             self.view_objs = self.view_objs[v_start:v_end]
-            self.view_list = self.view_list[v_start:v_end]
+            self.view_list = list(map(lambda x: re.sub(r'^\s*', '', x), self.view_list[v_start:v_end]))
             self.user_input()
             return
 
@@ -149,10 +151,7 @@ class CompareBuffCommand(sublime_plugin.WindowCommand):
         except Exception as e: sublime.error_message(this_package + str(e))
 
     def anything_selected(self, view):
-        for region in view.sel():
-            if region.empty(): continue
-            else: return(True)
-        return(False)
+        return(any(map(lambda x: not x.empty(), view.sel())))
 
     def get_path(self, view):
         path = view.file_name()
@@ -161,7 +160,6 @@ class CompareBuffCommand(sublime_plugin.WindowCommand):
             content = ''
             if selection:
                 for region in view.sel():
-                    if region.empty(): continue
                     content = '\n'.join(filter(None, [content, view.substr(region)]))
             else: content = view.substr(sublime.Region(0, view.size()))
 
