@@ -11,5 +11,6 @@ Thanks for installing this package. I hope it increases your productivity.
 
 Documentation to help you get started:
 
-- Navigate to: Preferences > Package Settings > CompareBuff > README or
+- Navigate to: Preferences > Package Settings > CompareBuff > README
+OR
 - visit github: https://github.com/nexional/CompareBuff/blob/main/README.md

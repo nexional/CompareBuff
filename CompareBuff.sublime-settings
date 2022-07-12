@@ -14,4 +14,7 @@
 
     // Show command in view context menu
     "show_in_context_menu": false,
+
+    // Number of recent items
+    "number_of_recent_items": 3
 }

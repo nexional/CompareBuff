@@ -16,8 +16,8 @@ have the external tool installed and the tool must allow the files to be passed 
 arguments.
 
 Using this package you can compare current file/buffer with any other open file/buffer from
-any existing sublime windows. Once you invoke the command (see **How to Use**) you'll be asked to
-select another file/buffer which you wish to compare against the current one.
+any existing sublime windows. Once you invoke the command you'll be asked to select another
+file/buffer which you wish to compare against the current one.
 
 Take a look at **How to Use** for usage.
 
@@ -63,9 +63,10 @@ You can also define the binding in your User Key Binding file (_Preferences > Ke
 You can override the default settings two ways:
 
 * From _Command Palette_ you can run following commands:
-    * `CompareBuff: cofigure external tool path`
-    * `CompareBuff: toggle show_in_context_menu`
+    * `CompareBuff: configure external_tool_path`
     * `CompareBuff: toggle prefer_selection`
+    * `CompareBuff: toggle show_in_context_menu`
+    * `CompareBuff: configure number_of_recent_items`
 
 * User Settings file (_Preferences > Package Settings > CompareBuff > Settings_):
 ```
@@ -85,6 +86,9 @@ You can override the default settings two ways:
 
     // Show command in view context menu
     "show_in_context_menu": false,
+
+    // Number of recent items
+    "number_of_recent_items": 3
 }
 ```
 
