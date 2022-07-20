@@ -14,20 +14,9 @@ recent_icon = u'\U0001F5CD '
 ellipsis_icon = u'\u2026 '
 this_package =  package_icon + 'CompareBuff: '
 package_settings = 'CompareBuff.sublime-settings'
-context_menu_file = os.path.join(sublime.packages_path(), 'CompareBuff', 'Context.sublime-menu')
 rec_objs = []
 rec_list = []
 view_objs = []
-context_content = '''[
-    {
-        "caption": "CompareBuff: compare with...",
-        "command": "compare_buff",
-    },
-    {
-        "caption": "-"
-    }
-]
-'''
 
 class Buffers(sublime_plugin.EventListener):
     def on_activated_async(self, view):
@@ -52,9 +41,19 @@ class Buffers(sublime_plugin.EventListener):
             rec_list.insert(0, get_view_name(view))
             rec_objs.insert(0, view)
 
+class CompareBuffContextMenuCommand(sublime_plugin.WindowCommand):
+    def run(self):
+        global curr_win
+        curr_win = self.window
+        curr_win.run_command('compare_buff')
+
+    def is_visible(self=None):
+        global settings
+        return(settings.get('show_in_context_menu'))
+
 class CompareBuffCommand(sublime_plugin.WindowCommand):
     def run(self, toggle_show_in_context_menu=False, toggle_prefer_selection=False, configure_external_tool_path=False, configure_number_of_recent_items=False):
-        global curr_win, curr_view
+        global curr_win, curr_view, settings
         curr_win = self.window
         settings = sublime.load_settings(package_settings)
         if settings_update(locals()): return
@@ -70,14 +69,14 @@ def plugin_loaded():
     global settings
     settings = sublime.load_settings(package_settings)
     settings.clear_on_change('show_in_context_menu')
-    settings.add_on_change('show_in_context_menu', implement_context_menu)
+    settings.add_on_change('show_in_context_menu', CompareBuffContextMenuCommand.is_visible())
 
 def settings_update(locals):
     if True not in locals.values(): return False
     if locals['toggle_show_in_context_menu']:
         settings.clear_on_change('show_in_context_menu')
         settings.set('show_in_context_menu', not settings.get('show_in_context_menu'))
-        settings.add_on_change('show_in_context_menu', implement_context_menu)
+        settings.add_on_change('show_in_context_menu', CompareBuffContextMenuCommand.is_visible())
         sublime.save_settings(package_settings)
         sublime.message_dialog(this_package + 'Context menu now ' + ('enabled' if settings.get('show_in_context_menu') else 'disabled'))
     elif locals['toggle_prefer_selection']:
@@ -173,17 +172,6 @@ def sort_and_place_first():
         if (n <= 1): break
     win_list.insert(0, win_list.pop(win_list.index(curr_win)))
 
-def implement_context_menu():
-    global context_menu_file, context_content
-    if (sublime.load_settings(package_settings).get('show_in_context_menu')):
-        package_dir = os.path.dirname(context_menu_file)
-        if not os.path.exists(package_dir): os.makedirs(package_dir)
-        with open(context_menu_file, 'w') as f:
-            f.write(context_content)
-    else:
-        try: os.remove(context_menu_file)
-        except: pass
-
 def launch_quick_panel():
     def on_select(i):
         if i == -1: return
@@ -198,7 +186,7 @@ def launch_quick_panel():
                 sublime.error_message(this_package + 'window has no open views')
                 return
             v_start = i + 1
-            views = target.views() if target != 'recent' else rec_objs[1:]
+            views = rec_objs[1:] if target == 'recent' else target.views()
             offset = len(views) - (1 if target == curr_win else 0)
             v_end = v_start + offset
             view_objs = view_objs[v_start:v_end]
