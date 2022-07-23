@@ -44,10 +44,6 @@ class Buffers(sublime_plugin.EventListener):
         rec_list.insert(0, get_view_name(view))
         rec_objs.insert(0, view)
 
-    def on_deactivated(self, view):
-        if view.settings().get('is_widget'):
-            sublime.active_window().run_command('hide_overlay')
-
 class CompareBuffContextMenuCommand(sublime_plugin.WindowCommand):
     def run(self):
         global curr_win
@@ -209,7 +205,6 @@ def launch_quick_panel():
         sublime.status_message(this_package + 'not enough views')
         return
     curr_win.show_quick_panel(items=view_list, selected_index=-1, on_select=on_select)
-
 
 def anything_selected(view):
     return(any(map(lambda x: not x.empty(), view.sel())))
