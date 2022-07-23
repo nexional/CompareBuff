@@ -19,27 +19,34 @@ rec_list = []
 view_objs = []
 
 class Buffers(sublime_plugin.EventListener):
-    def on_activated_async(self, view):
+    def on_activated(self, view):
         global rec_objs, rec_list, settings, max_rec
         max_rec = settings.get('number_of_recent_items')
         if not max_rec: return
-        if view.is_valid() and not view.settings().get('is_widget'):
-            for v in rec_objs:
-                if v.is_valid(): continue
-                index = rec_objs.index(v)
-                rec_objs.pop(index)
-                rec_list.pop(index)
+        if not view.is_valid() or \
+            view == view.window().find_output_panel('find_results') or \
+            view == view.window().find_output_panel('package_dev') or \
+            view.settings().get('is_widget'): return
+        for v in rec_objs:
+            if v.is_valid(): continue
+            index = rec_objs.index(v)
+            rec_objs.pop(index)
+            rec_list.pop(index)
 
-            if view in rec_objs:
-                index = rec_objs.index(view)
-                rec_objs.pop(index)
-                rec_list.pop(index)
-            elif len(rec_list) == (max_rec + 1):
-                rec_list.pop()
-                rec_objs.pop()
+        if view in rec_objs:
+            index = rec_objs.index(view)
+            rec_objs.pop(index)
+            rec_list.pop(index)
+        elif len(rec_list) == (max_rec + 1):
+            rec_list.pop()
+            rec_objs.pop()
 
-            rec_list.insert(0, get_view_name(view))
-            rec_objs.insert(0, view)
+        rec_list.insert(0, get_view_name(view))
+        rec_objs.insert(0, view)
+
+    def on_deactivated(self, view):
+        if view.settings().get('is_widget'):
+            sublime.active_window().run_command('hide_overlay')
 
 class CompareBuffContextMenuCommand(sublime_plugin.WindowCommand):
     def run(self):
