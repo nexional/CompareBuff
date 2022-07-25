@@ -17,16 +17,24 @@ package_settings = 'CompareBuff.sublime-settings'
 rec_objs = []
 rec_list = []
 view_objs = []
+panel_objs = []
 
 class Buffers(sublime_plugin.EventListener):
     def on_activated(self, view):
-        global rec_objs, rec_list, settings, max_rec
+        global panel_objs, rec_objs, rec_list, settings, max_rec
+        curr_win = view.window()
+        for win in panel_objs:
+            if win == curr_win: continue
+            win.run_command('hide_overlay')
+            panel_objs.remove(win)
+
         max_rec = settings.get('number_of_recent_items')
         if not max_rec: return
         if not view.is_valid() or \
             view == view.window().find_output_panel('find_results') or \
             view == view.window().find_output_panel('package_dev') or \
             view.settings().get('is_widget'): return
+
         for v in rec_objs:
             if v.is_valid(): continue
             index = rec_objs.index(v)
@@ -177,8 +185,9 @@ def sort_and_place_first():
 
 def launch_quick_panel():
     def on_select(i):
+        global panel_objs, view_objs, curr_view, curr_win, external_tool_path, view_list, external_tool_name
+        if curr_win in panel_objs: panel_objs.remove(curr_win)
         if i == -1: return
-        global view_objs, curr_view, curr_win, external_tool_path, view_list, external_tool_name
         target = view_objs[i]
         if (isinstance(target, sublime.Window) or isinstance(target, sublime.View)) and not target.is_valid():
             sublime.error_message(this_package + 'window or view does not exist')
@@ -194,6 +203,7 @@ def launch_quick_panel():
             v_end = v_start + offset
             view_objs = view_objs[v_start:v_end]
             view_list = list(map(lambda x: re.sub(r'^\s*', '', x), view_list[v_start:v_end]))
+            if curr_win not in panel_objs: panel_objs.append(curr_win)
             curr_win.show_quick_panel(items=view_list, selected_index=-1, on_select=on_select)
             return
 
@@ -204,6 +214,7 @@ def launch_quick_panel():
     if not view_list:
         sublime.status_message(this_package + 'not enough views')
         return
+    if curr_win not in panel_objs: panel_objs.append(curr_win)
     curr_win.show_quick_panel(items=view_list, selected_index=-1, on_select=on_select)
 
 def anything_selected(view):

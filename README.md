@@ -21,7 +21,7 @@ file/buffer which you wish to compare against the current one.
 
 Take a look at **How to Use** for usage.
 
-### Installation
+## Installation
 
 * Install [Sublime Text Package Control](https://packagecontrol.io). Skip if installed already
 * Go to _Tools > Command Palette_. Select `Package Control: Install Package`
