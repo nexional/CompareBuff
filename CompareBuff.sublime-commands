@@ -18,5 +18,9 @@
     {
         "caption": "CompareBuff: configure number_of_recent_items",
         "command": "compare_buff", "args": { "configure_number_of_recent_items": true }
+    },
+    {
+        "caption": "CompareBuff: toggle icons",
+        "command": "compare_buff", "args": { "toggle_icons": true }
     }
 ]

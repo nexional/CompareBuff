@@ -4,7 +4,7 @@
     // ** WINDOWS **
     "external_tool_path": "C:\\Program Files\\Beyond Compare 4\\BCompare.exe",
     // ** MAC-OS **
-    // "external_tool_path": "/usr/local/bin/bcompare",
+    // "external_tool_path": "/Applications/Beyond Compare.app/Contents/MacOS/bcomp",
     // ** LINUX **
     // "external_tool_path": "/usr/bin/bcompare",
 
@@ -16,5 +16,17 @@
     "show_in_context_menu": false,
 
     // Number of recent items
-    "number_of_recent_items": 3
+    "number_of_recent_items": 3,
+
+    // Icons, you can disable if you see [?] in selection panel
+    "icons":
+    {
+        "enable": true,
+        "icon_ellipsis": "…",
+        "icon_package": "🗗",
+        "icon_recent_files": "🗍",
+        "icon_scratch_file": "🗋",
+        "icon_valid_file": "🗎",
+        "icon_window": "🗔",
+    }
 }

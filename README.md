@@ -67,6 +67,7 @@ You can override the default settings two ways:
     * `CompareBuff: toggle prefer_selection`
     * `CompareBuff: toggle show_in_context_menu`
     * `CompareBuff: configure number_of_recent_items`
+    * `CompareBuff: toggle icons`
 
 * User Settings file (_Preferences > Package Settings > CompareBuff > Settings_):
 ```
@@ -76,7 +77,7 @@ You can override the default settings two ways:
     // ** WINDOWS **
     "external_tool_path": "C:\\Program Files\\Beyond Compare 4\\BCompare.exe",
     // ** MAC-OS **
-    // "external_tool_path": "/usr/local/bin/bcompare",
+    // "external_tool_path": "/Applications/Beyond Compare.app/Contents/MacOS/BCompare",
     // ** LINUX **
     // "external_tool_path": "/usr/bin/bcompare",
 
@@ -89,6 +90,18 @@ You can override the default settings two ways:
 
     // Number of recent items
     "number_of_recent_items": 3
+
+    // Icons, you can disable if you see [?] in selection panel
+    "icons":
+    {
+        "enable": true,
+        "icon_ellipsis": "…",
+        "icon_package": "🗗",
+        "icon_recent_files": "🗍",
+        "icon_scratch_file": "🗋",
+        "icon_valid_file": "🗎",
+        "icon_window": "🗔",
+    }
 }
 ```
 
@@ -100,7 +113,9 @@ You can override the default settings two ways:
 
 Please report any bugs/issues [here](https://github.com/nexional/CompareBuff/issues/new)
 
-## Links
+## My other work
+* [HoverLine](https://packagecontrol.io/packages/HoverLine)
+* [ConvertEpochToDate](https://packagecontrol.io/packages/ConvertEpochToDate)
 
+## Links
 * [Beyond Compare](https://www.scootersoftware.com/download.php)
-* [ConvertEpochToDate](https://packagecontrol.io/packages/ConvertEpochToDate) on packagecontrol.io (my other work)
