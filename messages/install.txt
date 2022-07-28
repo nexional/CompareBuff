@@ -9,6 +9,7 @@
 
 Thanks for installing this package. I hope it increases your productivity.
 
+
 Documentation to help you get started:
 
 - Navigate to: Preferences > Package Settings > CompareBuff > README
