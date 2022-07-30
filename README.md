@@ -100,7 +100,7 @@ You can override the default settings two ways:
         "icon_recent_files": "🗍",
         "icon_scratch_file": "🗋",
         "icon_valid_file": "🗎",
-        "icon_window": "🗔",
+        "icon_window": "🗔"
     }
 }
 ```

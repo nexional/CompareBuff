@@ -193,14 +193,16 @@ def prepare_quick_panel():
 
 def get_view_name(view):
     path = view.file_name()
-    default_view = (view == view.window().active_view())
+    w = view.window()
+    is_active_view = (w and view == w.active_view())
+
     if path:
         view_name = os.path.basename(path) + ('*' if view.is_dirty() else '')
-        view_name = with_icon('icon_valid_file', '[' + view_name + ']' if default_view else view_name)
+        view_name = with_icon('icon_valid_file', '[' + view_name + ']' if is_active_view else view_name)
     else:
         first_line = view.substr(sublime.Region(0,75)).encode('unicode_escape').decode()
         view_name = (first_line + with_icon('icon_ellipsis', '') if first_line else 'untitled')
-        view_name = with_icon('icon_scratch_file', '[' + view_name + ']' if default_view else view_name)
+        view_name = with_icon('icon_scratch_file', '[' + view_name + ']' if is_active_view else view_name)
     return('    ' + view_name)
 
 def sort_and_place_first():

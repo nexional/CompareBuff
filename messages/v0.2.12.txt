@@ -1,0 +1,11 @@
++---------+
+| v0.2.12 |
++---------+
+
+added:
+* active view for the window is enclosed within [ ] e.g. [abc.txt]
+* valid file if dirty is indicated with asterisk(*) e.g. abc.txt*
+* open folder(s)/project-name for the window are displayed alongside e.g. window#2 (my_proj, other_dir)
+
+fixed:
+* recent files not listed properly
