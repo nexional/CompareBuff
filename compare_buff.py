@@ -43,16 +43,16 @@ class Buffers(sublime_plugin.EventListener):
             panel_objs.remove(win)
 
         max_rec = settings.get('number_of_recent_items')
-        if not max_rec: return
-        if not view.is_valid() or \
-            view == view.window().find_output_panel('find_results') or \
-            view == view.window().find_output_panel('package_dev') or \
-            view.settings().get('is_widget'): return
+        if not max_rec or int(max_rec) < 0: return
+        if not view.is_valid() \
+            or view.settings().get('is_widget') \
+            or view == view.window().find_output_panel('find_results') \
+            or view == view.window().find_output_panel('package_dev'): return
 
-        for view in rec_objs:
-            index = rec_objs.index(view)
-            if view.is_valid():
-                rec_list[index] = get_view_name(view)
+        for v in rec_objs:
+            index = rec_objs.index(v)
+            if v.is_valid():
+                rec_list[index] = get_view_name(v)
             else:
                 rec_objs.pop(index)
                 rec_list.pop(index)
@@ -85,8 +85,7 @@ class CompareBuffCommand(sublime_plugin.WindowCommand):
         settings = sublime.load_settings(package_settings)
         if settings_update(locals()): return
         curr_view = curr_win.active_view()
-        if curr_view is None or not curr_view.is_valid(): return
-        if not validate_external_tool(): return
+        if curr_view is None or not (curr_view.is_valid() and validate_external_tool()): return
         validate_prefer_selection()
         sort_and_place_first()
         prepare_quick_panel()
@@ -109,7 +108,7 @@ def settings_update(locals):
         if not (path and os.path.exists(path) and os.path.isfile(path)):
             platform = sublime.platform()
             if platform == 'windows': path = 'C:\\Program Files\\Beyond Compare 4\\BCompare.exe'
-            elif platform == 'osx': path = '/Applications/Beyond Compare.app/Contents/MacOS/BCompare'
+            elif platform == 'osx': path = '/Applications/Beyond Compare.app/Contents/MacOS/bcomp'
             elif platform == 'linux': path = '/usr/bin/bcompare'
         def on_done(path):
             path = re.sub('''^["']|["']$''', '', path.strip())
@@ -122,8 +121,8 @@ def settings_update(locals):
                 curr_win.show_input_panel('External Comparison tool path:', path, on_done, None, None)
         curr_win.show_input_panel('External Comparison tool path:', path, on_done, None, None)
     elif locals['configure_number_of_recent_items']:
-        number_of_recent_items = str(settings.get('number_of_recent_items'))
-        if not number_of_recent_items: number_of_recent_items = '3'
+        num = str(settings.get('number_of_recent_items'))
+        if num is None or not num.isdigit() or int(num) < 0: num = 3
         def on_done(num):
             if num and num.isdigit() and int(num) >= 0:
                 settings.set('number_of_recent_items', int(num))
@@ -132,11 +131,11 @@ def settings_update(locals):
             else:
                 sublime.error_message(this_package + 'please provide a valid whole number')
                 curr_win.show_input_panel('number_of_recent_items:', num, on_done, None, None)
-        curr_win.show_input_panel('number_of_recent_items:', number_of_recent_items, on_done, None, None)
+        curr_win.show_input_panel('number_of_recent_items:', num, on_done, None, None)
     elif locals['toggle_icons']:
         settings.clear_on_change('icons')
         icons = settings.get('icons')
-        icons["enable"] = not icons["enable"]
+        icons['enable'] = not icons['enable']
         settings.set('icons', icons)
         settings.add_on_change('icons', load_icons())
         sublime.save_settings(package_settings)
@@ -157,7 +156,7 @@ def validate_prefer_selection():
     if prefer_selection not in [True, False]: prefer_selection = True
 
 def prepare_quick_panel():
-    global view_objs, view_list, rec_list, max_rec
+    global view_objs, win_list, view_list, rec_list, max_rec
     view_objs = []
     view_list = []
     curr_view = curr_win.active_view()
@@ -167,7 +166,15 @@ def prepare_quick_panel():
             win_str = 'this window'
         else:
             if not win.views(): continue
-            win_str = 'window ' + str(win.id())
+            win_str = 'window#' + str(win.id())
+
+        folder_bases = []
+        proj = win.project_data()
+        if proj:
+            for folder in proj['folders']:
+                folder_base = os.path.basename(folder['path'])
+                if folder_base: folder_bases.append(folder_base)
+            if folder_bases: win_str += ' (' + ', '.join(folder_bases) + ')'
 
         view_objs.append(win)
         win_str = with_icon('icon_window', win_str)
@@ -180,16 +187,20 @@ def prepare_quick_panel():
 
     if max_rec and len(rec_list) > 1:
         view_list = rec_list[1:] + view_list
-        view_list.insert(0, with_icon('icon_recent_files', 'recent'))
+        view_list.insert(0, with_icon('icon_recent_files', 'recent files'))
         view_objs = rec_objs[1:] + view_objs
-        view_objs.insert(0, 'recent')
+        view_objs.insert(0, 'recent files')
 
 def get_view_name(view):
     path = view.file_name()
-    if path: view_name = with_icon('icon_valid_file', os.path.basename(path))
+    default_view = (view == view.window().active_view())
+    if path:
+        view_name = os.path.basename(path) + ('*' if view.is_dirty() else '')
+        view_name = with_icon('icon_valid_file', '[' + view_name + ']' if default_view else view_name)
     else:
         first_line = view.substr(sublime.Region(0,75)).encode('unicode_escape').decode()
-        view_name = with_icon('icon_scratch_file', (first_line + with_icon('icon_ellipsis', '') if first_line else 'untitled'))
+        view_name = (first_line + with_icon('icon_ellipsis', '') if first_line else 'untitled')
+        view_name = with_icon('icon_scratch_file', '[' + view_name + ']' if default_view else view_name)
     return('    ' + view_name)
 
 def sort_and_place_first():
@@ -211,17 +222,18 @@ def launch_quick_panel():
         global panel_objs, view_objs, curr_view, curr_win, external_tool_path, view_list, external_tool_name
         if curr_win in panel_objs: panel_objs.remove(curr_win)
         if i == -1: return
+
         target = view_objs[i]
         if (isinstance(target, sublime.Window) or isinstance(target, sublime.View)) and not target.is_valid():
             sublime.error_message(this_package + 'window or view does not exist')
             return
 
-        if target in sublime.windows() + ['recent']:
-            if (target != 'recent' and isinstance(target, sublime.Window) and not target.views()):
+        if target in sublime.windows() + ['recent files']:
+            if (target != 'recent files' and isinstance(target, sublime.Window) and not target.views()):
                 sublime.error_message(this_package + 'window has no open views')
                 return
             v_start = i + 1
-            views = rec_objs[1:] if target == 'recent' else target.views()
+            views = rec_objs[1:] if target == 'recent files' else target.views()
             offset = len(views) - (1 if target == curr_win else 0)
             v_end = v_start + offset
             view_objs = view_objs[v_start:v_end]
@@ -233,11 +245,13 @@ def launch_quick_panel():
         sublime.status_message(this_package + 'Opening external tool for comparison...')
         try: subprocess.Popen([external_tool_path, get_path(curr_view), get_path(target)])
         except Exception as e: sublime.error_message(this_package + str(e))
+
     global curr_win, view_list
     if not view_list:
         sublime.status_message(this_package + 'not enough views')
         return
     if curr_win not in panel_objs: panel_objs.append(curr_win)
+    curr_win.run_command('hide_overlay')
     curr_win.show_quick_panel(items=view_list, selected_index=-1, on_select=on_select)
 
 def anything_selected(view):
