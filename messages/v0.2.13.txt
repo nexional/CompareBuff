@@ -1,0 +1,9 @@
++---------+
+| v0.2.13 |
++---------+
+
+change:
+* To unclutter the command palette, settings can now only be changed through user settings file
+
+add:
+* file preview option

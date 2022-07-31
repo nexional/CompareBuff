@@ -60,16 +60,7 @@ You can also define the binding in your User Key Binding file (_Preferences > Ke
 
 ## Customization
 
-You can override the default settings two ways:
-
-* From _Command Palette_ you can run following commands:
-    * `CompareBuff: configure external_tool_path`
-    * `CompareBuff: toggle prefer_selection`
-    * `CompareBuff: toggle show_in_context_menu`
-    * `CompareBuff: configure number_of_recent_items`
-    * `CompareBuff: toggle icons`
-
-* User Settings file (_Preferences > Package Settings > CompareBuff > Settings_):
+You can override the default settings in User Settings file (_Preferences > Package Settings > CompareBuff > Settings_):
 ```
 {
     // Provide the External Comparison tool path here e.g. Beyond Compare.
@@ -77,7 +68,7 @@ You can override the default settings two ways:
     // ** WINDOWS **
     "external_tool_path": "C:\\Program Files\\Beyond Compare 4\\BCompare.exe",
     // ** MAC-OS **
-    // "external_tool_path": "/Applications/Beyond Compare.app/Contents/MacOS/BCompare",
+    // "external_tool_path": "/Applications/Beyond Compare.app/Contents/MacOS/bcomp",
     // ** LINUX **
     // "external_tool_path": "/usr/bin/bcompare",
 
@@ -89,9 +80,12 @@ You can override the default settings two ways:
     "show_in_context_menu": false,
 
     // Number of recent items
-    "number_of_recent_items": 3
+    "number_of_recent_items": 3,
 
-    // Icons, you can disable if you see [?] in selection panel
+    // Show file preview in the panel
+    "file_preview_in_panel": true,
+
+    // Icons, you can disable if you see [?] in panel
     "icons":
     {
         "enable": true,
@@ -100,8 +94,8 @@ You can override the default settings two ways:
         "icon_recent_files": "🗍",
         "icon_scratch_file": "🗋",
         "icon_valid_file": "🗎",
-        "icon_window": "🗔"
-    }
+        "icon_window": "🗔",
+    },
 }
 ```
 
@@ -114,7 +108,6 @@ You can override the default settings two ways:
 Please report any bugs/issues [here](https://github.com/nexional/CompareBuff/issues/new)
 
 ## My other work
-* [HoverLine](https://packagecontrol.io/packages/HoverLine)
 * [ConvertEpochToDate](https://packagecontrol.io/packages/ConvertEpochToDate)
 
 ## Links

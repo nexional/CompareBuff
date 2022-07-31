@@ -11,6 +11,7 @@ rec_list = []
 view_objs = []
 panel_objs = []
 icons = {}
+space = '    '
 package_settings = 'CompareBuff.sublime-settings'
 
 def plugin_loaded():
@@ -20,11 +21,11 @@ def plugin_loaded():
     settings.add_on_change('show_in_context_menu', CompareBuffContextMenuCommand.is_visible())
     settings.clear_on_change('icons')
     settings.add_on_change('icons', load_icons())
-    load_icons()
 
 def with_icon(icon, string):
     global icons
-    return(' '.join(filter(None, [icons.get(icon), string])))
+    if icons.get(icon): return(' '.join(filter(None, [icons.get(icon), string])))
+    else: return string
 
 this_package = with_icon('icon_package', 'CompareBuff: ')
 
@@ -33,7 +34,7 @@ def load_icons():
     icons = settings.get('icons')
     if not (icons and icons.get('enable') and icons.get('enable') in [True, False]): icons = {}
 
-class Buffers(sublime_plugin.EventListener):
+class RecentFiles(sublime_plugin.EventListener):
     def on_activated(self, view):
         global panel_objs, rec_objs, rec_list, settings, max_rec
         curr_win = view.window()
@@ -47,13 +48,12 @@ class Buffers(sublime_plugin.EventListener):
         if not view.is_valid() \
             or view.settings().get('is_widget') \
             or view == view.window().find_output_panel('find_results') \
-            or view == view.window().find_output_panel('package_dev'): return
+            or view == view.window().find_output_panel('package_dev'): \
+            return
 
         for v in rec_objs:
             index = rec_objs.index(v)
-            if v.is_valid():
-                rec_list[index] = get_view_name(v)
-            else:
+            if not v.is_valid():
                 rec_objs.pop(index)
                 rec_list.pop(index)
 
@@ -76,110 +76,93 @@ class CompareBuffContextMenuCommand(sublime_plugin.WindowCommand):
 
     def is_visible(self=None):
         global settings
+        validate_settings('show_in_context_menu')
         return(settings.get('show_in_context_menu'))
 
 class CompareBuffCommand(sublime_plugin.WindowCommand):
-    def run(self, toggle_show_in_context_menu=False, toggle_prefer_selection=False, configure_external_tool_path=False, configure_number_of_recent_items=False, toggle_icons=False):
+    def run(self):
         global curr_win, curr_view, settings
         curr_win = self.window
-        settings = sublime.load_settings(package_settings)
-        if settings_update(locals()): return
         curr_view = curr_win.active_view()
-        if curr_view is None or not (curr_view.is_valid() and validate_external_tool()): return
-        validate_prefer_selection()
+        if curr_view is None or not curr_view.is_valid(): return
+        if not validate_settings('external_tool_path','prefer_selection',  'show_in_context_menu', 'number_of_recent_items', 'file_preview_in_panel', 'icons'): return
+        load_icons()
         sort_and_place_first()
         prepare_quick_panel()
         launch_quick_panel()
 
-def settings_update(locals):
-    if True not in locals.values(): return False
-    if locals['toggle_show_in_context_menu']:
-        settings.clear_on_change('show_in_context_menu')
-        settings.set('show_in_context_menu', not settings.get('show_in_context_menu'))
-        settings.add_on_change('show_in_context_menu', CompareBuffContextMenuCommand.is_visible())
-        sublime.save_settings(package_settings)
-        sublime.message_dialog(this_package + 'Context menu now ' + ('enabled' if settings.get('show_in_context_menu') else 'disabled'))
-    elif locals['toggle_prefer_selection']:
-        settings.set('prefer_selection', not settings.get('prefer_selection'))
-        sublime.save_settings(package_settings)
-        sublime.message_dialog(this_package + 'prefer_selection now ' + ('enabled' if settings.get('prefer_selection') else 'disabled'))
-    elif locals['configure_external_tool_path']:
-        path = settings.get('external_tool_path')
-        if not (path and os.path.exists(path) and os.path.isfile(path)):
-            platform = sublime.platform()
-            if platform == 'windows': path = 'C:\\Program Files\\Beyond Compare 4\\BCompare.exe'
-            elif platform == 'osx': path = '/Applications/Beyond Compare.app/Contents/MacOS/bcomp'
-            elif platform == 'linux': path = '/usr/bin/bcompare'
-        def on_done(path):
-            path = re.sub('''^["']|["']$''', '', path.strip())
-            if path and os.path.exists(path) and os.path.isfile(path):
-                settings.set('external_tool_path', path)
+def validate_settings(*params):
+    global settings, external_tool_path, prefer_selection
+    settings = sublime.load_settings(package_settings)
+    for param in params:
+        if param == 'external_tool_path':
+            external_tool_path = settings.get('external_tool_path')
+            if external_tool_path is None or not (os.path.exists(external_tool_path) and os.path.isfile(external_tool_path)):
+                sublime.error_message(this_package + 'External tool path \'' + external_tool_path + '\' is not valid')
+                return False
+        elif param == 'prefer_selection':
+            prefer_selection = settings.get('prefer_selection')
+            if prefer_selection is None or prefer_selection not in (True, False):
+                prefer_selection = True
+                settings.set('prefer_selection', prefer_selection)
                 sublime.save_settings(package_settings)
-                sublime.message_dialog(this_package + 'External tool path updated to \'' + path + '\'')
-            else:
-                sublime.error_message(this_package + 'External tool path \'' + path + '\' does not exist')
-                curr_win.show_input_panel('External Comparison tool path:', path, on_done, None, None)
-        curr_win.show_input_panel('External Comparison tool path:', path, on_done, None, None)
-    elif locals['configure_number_of_recent_items']:
-        num = str(settings.get('number_of_recent_items'))
-        if num is None or not num.isdigit() or int(num) < 0: num = 3
-        def on_done(num):
-            if num and num.isdigit() and int(num) >= 0:
+        elif param == 'show_in_context_menu':
+            show_in_context_menu = settings.get('show_in_context_menu')
+            if show_in_context_menu is None or show_in_context_menu not in (True, False):
+                show_in_context_menu = False
+                settings.set('show_in_context_menu', show_in_context_menu)
+                sublime.save_settings(package_settings)
+        elif param == 'number_of_recent_items':
+            num = str(settings.get('number_of_recent_items'))
+            if num is None or not num.isdigit() or int(num) < 0:
+                num = 3
                 settings.set('number_of_recent_items', int(num))
                 sublime.save_settings(package_settings)
-                sublime.message_dialog(this_package + 'number_of_recent_items updated to ' + str(num))
-            else:
-                sublime.error_message(this_package + 'please provide a valid whole number')
-                curr_win.show_input_panel('number_of_recent_items:', num, on_done, None, None)
-        curr_win.show_input_panel('number_of_recent_items:', num, on_done, None, None)
-    elif locals['toggle_icons']:
-        settings.clear_on_change('icons')
-        icons = settings.get('icons')
-        icons['enable'] = not icons['enable']
-        settings.set('icons', icons)
-        settings.add_on_change('icons', load_icons())
-        sublime.save_settings(package_settings)
-        sublime.message_dialog(this_package + 'icons now ' + ('enabled' if settings.get('icons')['enable'] else 'disabled'))
+        elif param == 'file_preview_in_panel':
+            file_preview_in_panel = settings.get('file_preview_in_panel')
+            if file_preview_in_panel is None or file_preview_in_panel not in (True, False):
+                file_preview_in_panel = True
+                settings.set('file_preview_in_panel', file_preview_in_panel)
+                sublime.save_settings(package_settings)
+        elif param == 'icons':
+            icons = settings.get('icons')
+            if icons is None:
+                icons = {}
+                icons['enable'] = true
+            if icons['enable'] is None or icons['enable'] not in (True, False):
+                icons['enable'] = true
+                settings.clear_on_change('icons')
+                settings.set('icons', icons)
+                sublime.save_settings(package_settings)
+                settings.add_on_change('icons', load_icons())
     return True
-
-def validate_external_tool():
-    global settings, external_tool_path
-    external_tool_path = settings.get('external_tool_path')
-    if not (os.path.exists(external_tool_path) and os.path.isfile(external_tool_path)):
-        sublime.error_message(this_package + 'External tool path \'' + external_tool_path + '\' is invalid.\nPlease check \'external_tool_path\' value under Preferences > Package Settings > CompareBuff > Settings')
-        return False
-    return True
-
-def validate_prefer_selection():
-    global settings, prefer_selection
-    prefer_selection = settings.get('prefer_selection')
-    if prefer_selection not in [True, False]: prefer_selection = True
 
 def prepare_quick_panel():
-    global view_objs, win_list, view_list, rec_list, max_rec
+    global settings, view_objs, win_list, view_list, rec_list, max_rec
     view_objs = []
     view_list = []
     curr_view = curr_win.active_view()
     for win in win_list:
         if win == curr_win:
             if len(win.views()) <= 1: continue
-            win_str = 'this window'
+            win_str = 'THIS WINDOW'
         else:
             if not win.views(): continue
-            win_str = 'window#' + str(win.id())
+            win_str = 'WINDOW#' + str(win.id())
 
         win_content = ''
         folder_bases = []
         proj = win.project_data()
         if proj:
             for folder in proj['folders']:
-                folder_base = folder['path']
+                folder_base = os.path.basename(folder['path'])
                 if folder_base: folder_bases.append(folder_base)
-            if folder_bases: win_content = '    (' + ', '.join(folder_bases) + ')'
+            if folder_bases: win_content = space + '(' + ', '.join(folder_bases) + ')'
 
         view_objs.append(win)
         win_str = with_icon('icon_window', win_str)
-        win_str = [win_str, win_content]
+        if settings.get('file_preview_in_panel'): win_str = [win_str, win_content]
+        else: win_str = [win_str + win_content, '']
         view_list.append(win_str)
 
         for view in win.views():
@@ -188,27 +171,32 @@ def prepare_quick_panel():
             view_list.append(get_view_name(view))
 
     if max_rec and len(rec_list) > 1:
+        for v in rec_objs:
+            index = rec_objs.index(v)
+            if v.is_valid():
+                rec_list[index] = get_view_name(v)
+
         view_list = rec_list[1:] + view_list
-        view_list.insert(0, with_icon('icon_recent_files', 'recent files'))
+        view_list.insert(0, with_icon('icon_recent_files', 'RECENT FILES'))
         view_objs = rec_objs[1:] + view_objs
-        view_objs.insert(0, 'recent files')
+        view_objs.insert(0, 'RECENT FILES')
 
 def check_active(view, view_name):
     w = view.window()
-    is_active_view = (w and view == w.active_view())
-    return('[' + view_name + ']' if is_active_view else view_name)
+    return('[' + view_name + ']' if (w and view == w.active_view()) else view_name)
 
 def get_view_name(view):
+    global settings
     path = view.file_name()
     if path:
         view_name = os.path.basename(path) + ('*' if view.is_dirty() else '')
-        view_name = '    ' + with_icon('icon_valid_file', check_active(view, view_name))
+        view_name = space + with_icon('icon_valid_file', check_active(view, view_name))
     else:
-        view_name = '    ' + with_icon('icon_scratch_file', check_active(view, 'untitled'))
+        view_name = space + with_icon('icon_scratch_file', check_active(view, 'untitled'))
 
     first_line = view.substr(sublime.Region(0,75)).encode('unicode_escape').decode()
-    view_content = '        ' + (first_line + with_icon('icon_ellipsis', '') if first_line else '<empty>')
-    return([view_name, view_content])
+    view_content = space * 2 + (first_line + with_icon('icon_ellipsis', '') if first_line else '<empty>')
+    return([view_name, view_content if settings.get('file_preview_in_panel') else ''])
 
 def sort_and_place_first():
     global curr_win, win_list
@@ -235,12 +223,12 @@ def launch_quick_panel():
             sublime.error_message(this_package + 'window or view does not exist')
             return
 
-        if target in sublime.windows() + ['recent files']:
-            if (target != 'recent files' and isinstance(target, sublime.Window) and not target.views()):
+        if target in sublime.windows() + ['RECENT FILES']:
+            if (target != 'RECENT FILES' and isinstance(target, sublime.Window) and not target.views()):
                 sublime.error_message(this_package + 'window has no open views')
                 return
             v_start = i + 1
-            views = rec_objs[1:] if target == 'recent files' else target.views()
+            views = rec_objs[1:] if target == 'RECENT FILES' else target.views()
             offset = len(views) - (1 if target == curr_win else 0)
             v_end = v_start + offset
             view_objs = view_objs[v_start:v_end]

@@ -18,7 +18,10 @@
     // Number of recent items
     "number_of_recent_items": 3,
 
-    // Icons, you can disable if you see [?] in selection panel
+    // Show file preview in the panel
+    "file_preview_in_panel": true,
+
+    // Icons, you can disable if you see [?] in panel
     "icons":
     {
         "enable": true,

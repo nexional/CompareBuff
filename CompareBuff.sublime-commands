@@ -2,25 +2,5 @@
     {
         "caption": "CompareBuff: compare with...",
         "command": "compare_buff"
-    },
-    {
-        "caption": "CompareBuff: configure external_tool_path",
-        "command": "compare_buff", "args": { "configure_external_tool_path": true }
-    },
-    {
-        "caption": "CompareBuff: toggle prefer_selection",
-        "command": "compare_buff", "args": { "toggle_prefer_selection": true }
-    },
-    {
-        "caption": "CompareBuff: toggle show_in_context_menu",
-        "command": "compare_buff", "args": { "toggle_show_in_context_menu": true }
-    },
-    {
-        "caption": "CompareBuff: configure number_of_recent_items",
-        "command": "compare_buff", "args": { "configure_number_of_recent_items": true }
-    },
-    {
-        "caption": "CompareBuff: toggle icons",
-        "command": "compare_buff", "args": { "toggle_icons": true }
     }
 ]
