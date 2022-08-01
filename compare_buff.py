@@ -76,7 +76,6 @@ class CompareBuffContextMenuCommand(sublime_plugin.WindowCommand):
 
     def is_visible(self=None):
         global settings
-        validate_settings('show_in_context_menu')
         return(settings.get('show_in_context_menu'))
 
 class CompareBuffCommand(sublime_plugin.WindowCommand):
@@ -244,9 +243,12 @@ def launch_quick_panel():
 
         args = [get_path(curr_view), get_path(target)]
         if isinstance(external_tool_path, list):
-            if len(external_tool_path) == 1: external_tool_cmd = [external_tool_path[0], *args]
-            else: external_tool_cmd = [external_tool_path[0], *list(map(lambda x: x.format(*args), external_tool_path[1:]))]
-        else: external_tool_cmd = [external_tool_path, *args]
+            external_tool_cmd = [external_tool_path[0]]
+            if len(external_tool_path) == 1: external_tool_cmd.extend(args)
+            else: external_tool_cmd.extend(list(map(lambda x: x.format(*args), external_tool_path[1:])))
+        else:
+            external_tool_cmd = [external_tool_path]
+            external_tool_cmd.extend(args)
 
         sublime.status_message(this_package + 'Launching ' + ' '.join(external_tool_cmd))
         try: subprocess.Popen(external_tool_cmd)
