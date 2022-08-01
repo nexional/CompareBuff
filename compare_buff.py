@@ -97,8 +97,10 @@ def validate_settings(*params):
     for param in params:
         if param == 'external_tool_path':
             external_tool_path = settings.get('external_tool_path')
-            if external_tool_path is None or not (os.path.exists(external_tool_path) and os.path.isfile(external_tool_path)):
-                sublime.error_message(this_package + 'External tool path \'' + external_tool_path + '\' is not valid')
+            et_path = external_tool_path
+            if external_tool_path and isinstance(external_tool_path, list): et_path = external_tool_path[0]
+            if et_path is None or not (os.path.exists(et_path) and os.path.isfile(et_path)):
+                sublime.error_message(this_package + 'External tool path \'' + str(et_path) + '\' is not valid')
                 return False
         elif param == 'prefer_selection':
             prefer_selection = settings.get('prefer_selection')
@@ -240,8 +242,14 @@ def launch_quick_panel():
             curr_win.show_quick_panel(items=view_list, selected_index=-1, on_select=on_select)
             return
 
-        sublime.status_message(this_package + 'Opening external tool for comparison...')
-        try: subprocess.Popen([external_tool_path, get_path(curr_view), get_path(target)])
+        args = [get_path(curr_view), get_path(target)]
+        if isinstance(external_tool_path, list):
+            if len(external_tool_path) == 1: external_tool_cmd = [external_tool_path[0], *args]
+            else: external_tool_cmd = [external_tool_path[0], *list(map(lambda x: x.format(*args), external_tool_path[1:]))]
+        else: external_tool_cmd = [external_tool_path, *args]
+
+        sublime.status_message(this_package + 'Launching ' + ' '.join(external_tool_cmd))
+        try: subprocess.Popen(external_tool_cmd)
         except Exception as e: sublime.error_message(this_package + str(e))
 
     global curr_win, view_list
@@ -268,7 +276,8 @@ def get_path(view):
 
         fd, tmp_path = tempfile.mkstemp(suffix = '.txt')
         with os.fdopen(fd, 'w') as tmp:
-            tmp.write(content)
+            try: tmp.write(content)
+            except UnicodeEncodeError: pass
         if path is not None:
             path = os.path.join(os.path.dirname(tmp_path), os.path.basename(path))
             os.replace(tmp_path, path)

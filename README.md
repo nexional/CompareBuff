@@ -67,19 +67,24 @@ You can override the default settings in User Settings file (_Preferences > Pack
     // Make sure you use the correct path of the binary as it exists
     // ** WINDOWS **
     "external_tool_path": "C:\\Program Files\\Beyond Compare 4\\BCompare.exe",
+
+    // NOTE: Above command will send the selected buffers as argument implicitly but
+    // if you need to send more than two arguments to the external tool then you can
+    // define as below where {0} and {1} are replaced with the buffers you select
+    // "external_tool_path": [ "C:\\Program Files\\Beyond Compare 4\\BCompare.exe", "--file1", "{0}", "--file2", "{1}" ],
+
     // ** MAC-OS **
     // "external_tool_path": "/Applications/Beyond Compare.app/Contents/MacOS/bcomp",
     // ** LINUX **
     // "external_tool_path": "/usr/bin/bcompare",
 
-    // Prefer selection(s) over whole file/buffer content for comparison
-    // Turn it on when you want just selection to be sent for comparison
+    // Just selection to be sent for comparison
     "prefer_selection": true,
 
-    // Show command in view context menu
+    // Show command in view (right-click) context menu
     "show_in_context_menu": false,
 
-    // Number of recent items
+    // Number of recent items to show in panel
     "number_of_recent_items": 3,
 
     // Show file preview in the panel
@@ -94,8 +99,8 @@ You can override the default settings in User Settings file (_Preferences > Pack
         "icon_recent_files": "🗍",
         "icon_scratch_file": "🗋",
         "icon_valid_file": "🗎",
-        "icon_window": "🗔",
-    },
+        "icon_window": "🗔"
+    }
 }
 ```
 
