@@ -2,5 +2,9 @@
     {
         "caption": "CompareBuff: compare with...",
         "command": "compare_buff_context_menu"
+    },
+    {
+        "caption": "CompareBuff: merge with...",
+        "command": "compare_buff_context_menu", "args": { "merge": true }
     }
 ]

@@ -13,6 +13,8 @@ panel_objs = []
 icons = {}
 space = '    '
 package_settings = 'CompareBuff.sublime-settings'
+merge_flag = False
+merge_view = None
 
 def plugin_loaded():
     global settings, icons
@@ -69,7 +71,7 @@ class RecentFiles(sublime_plugin.EventListener):
         rec_objs.insert(0, view)
 
 class CompareBuffContextMenuCommand(sublime_plugin.WindowCommand):
-    def run(self):
+    def run(self, merge=False):
         global curr_win
         curr_win = self.window
         curr_win.run_command('compare_buff')
@@ -79,8 +81,10 @@ class CompareBuffContextMenuCommand(sublime_plugin.WindowCommand):
         return(settings.get('show_in_context_menu'))
 
 class CompareBuffCommand(sublime_plugin.WindowCommand):
-    def run(self):
-        global curr_win, curr_view, settings
+    def run(self, merge=False):
+        global merge_flag, curr_win, curr_view, settings
+        merge_flag = merge
+        merge_view = None
         curr_win = self.window
         curr_view = curr_win.active_view()
         if curr_view is None or not curr_view.is_valid(): return
@@ -139,7 +143,7 @@ def validate_settings(*params):
     return True
 
 def prepare_quick_panel():
-    global settings, view_objs, win_list, view_list, rec_list, max_rec
+    global merge_flag, merge_view, settings, view_objs, win_list, view_list, rec_list, max_rec
     view_objs = []
     view_list = []
     curr_view = curr_win.active_view()
@@ -182,6 +186,23 @@ def prepare_quick_panel():
         view_objs = rec_objs[1:] + view_objs
         view_objs.insert(0, 'RECENT FILES')
 
+    if merge_flag and merge_view and merge_view in view_objs:
+        for index, v in enumerate(view_objs):
+            if v == merge_view:
+                view_objs.pop(index)
+                view_list.pop(index)
+
+        w = merge_view.window()
+        if (w == curr_win and len(w.views()) <= 2) or len(w.views()) <= 1:
+            index = view_objs.index(w)
+            view_objs.pop(index)
+            view_list.pop(index)
+
+        if len(rec_objs) == 2 and merge_view in rec_objs and curr_view in rec_objs:
+            index = view_objs.index('RECENT FILES')
+            view_objs.pop(index)
+            view_list.pop(index)
+
 def check_active(view, view_name):
     w = view.window()
     return('[' + view_name + ']' if (w and view == w.active_view()) else view_name)
@@ -215,9 +236,12 @@ def sort_and_place_first():
 
 def launch_quick_panel():
     def on_select(i):
-        global panel_objs, view_objs, curr_view, curr_win, external_tool_path, view_list, external_tool_name
+        global merge_flag, merge_view, panel_objs, view_objs, curr_view, curr_win, external_tool_path, view_list, external_tool_name
         if curr_win in panel_objs: panel_objs.remove(curr_win)
-        if i == -1: return
+        if i == -1:
+            merge_flag = False
+            merge_view = None
+            return
 
         target = view_objs[i]
         if (isinstance(target, sublime.Window) or isinstance(target, sublime.View)) and not target.is_valid():
@@ -241,7 +265,19 @@ def launch_quick_panel():
             curr_win.show_quick_panel(items=view_list, selected_index=-1, on_select=on_select)
             return
 
-        args = [get_path(curr_view), get_path(target)]
+        if merge_flag:
+            if merge_view:
+                args = [get_path(curr_view), get_path(target), get_path(merge_view)]
+                merge_flag = False
+                merge_view = None
+            else:
+                merge_view = target
+                prepare_quick_panel()
+                launch_quick_panel()
+                return
+        else:
+            args = [get_path(curr_view), get_path(target)]
+
         if isinstance(external_tool_path, list):
             external_tool_cmd = [external_tool_path[0]]
             if len(external_tool_path) == 1: external_tool_cmd.extend(args)
