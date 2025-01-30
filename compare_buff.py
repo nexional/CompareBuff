@@ -114,8 +114,8 @@ def validate_settings(*params):
                 settings.set('show_in_context_menu', show_in_context_menu)
                 sublime.save_settings(package_settings)
         elif param == 'number_of_recent_items':
-            num = str(settings.get('number_of_recent_items'))
-            if num is None or not num.isdigit() or int(num) < 0:
+            num = settings.get('number_of_recent_items')
+            if not (num and str(num).isdigit() and int(num) > 0):
                 num = 3
                 settings.set('number_of_recent_items', int(num))
                 sublime.save_settings(package_settings)
@@ -129,9 +129,9 @@ def validate_settings(*params):
             icons = settings.get('icons')
             if icons is None:
                 icons = {}
-                icons['enable'] = true
+                icons['enable'] = True
             if icons['enable'] is None or icons['enable'] not in (True, False):
-                icons['enable'] = true
+                icons['enable'] = True
                 settings.clear_on_change('icons')
                 settings.set('icons', icons)
                 sublime.save_settings(package_settings)
@@ -188,12 +188,9 @@ def check_active(view, view_name):
 
 def get_view_name(view):
     global settings
-    path = view.file_name()
-    if path:
-        view_name = os.path.basename(path) + ('*' if view.is_dirty() else '')
-        view_name = space + with_icon('icon_valid_file', check_active(view, view_name))
-    else:
-        view_name = space + with_icon('icon_scratch_file', check_active(view, 'untitled'))
+    view_name = os.path.basename(view.file_name()) if view.file_name() else view.name()
+    if view_name: view_name = space + with_icon('icon_valid_file', check_active(view, view_name + ('*' if view.is_dirty() else '')))
+    else: view_name = space + with_icon('icon_scratch_file', check_active(view, 'untitled'))
 
     first_line = view.substr(sublime.Region(0,75)).encode('unicode_escape').decode()
     view_content = space * 2 + (first_line + with_icon('icon_ellipsis', '') if first_line else '<empty>')
@@ -235,7 +232,7 @@ def launch_quick_panel():
             view_objs = view_objs[v_start:v_end]
             view_sub_list = []
             for view_name in view_list[v_start:v_end]:
-                view_sub_list.append(list(map(lambda x: re.sub(r'^    ', '', x), view_name)))
+                view_sub_list.append(list(map(lambda x: re.sub(r'^\s{4}', '', x), view_name)))
             view_list = view_sub_list
             if curr_win not in panel_objs: panel_objs.append(curr_win)
             curr_win.show_quick_panel(items=view_list, selected_index=-1, on_select=on_select)
@@ -285,4 +282,3 @@ def get_path(view):
             os.replace(tmp_path, path)
         else: path = tmp_path
     return(path)
-

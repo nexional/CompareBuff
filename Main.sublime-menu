@@ -24,8 +24,8 @@
                                 "caption": "README",
                                 "command": "open_file",
                                 "args": {
-                                    "file": "${packages}/CompareBuff/README.md",
-                                },
+                                    "file": "${packages}/CompareBuff/README.md"
+                                }
                             }
                         ]
                     }

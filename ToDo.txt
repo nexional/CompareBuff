@@ -1,0 +1,3 @@
+- compare with clipboard
+- view title rather than untitled
+- current window first then recents
