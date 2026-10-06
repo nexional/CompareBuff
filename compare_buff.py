@@ -129,9 +129,9 @@ def validate_settings(*params):
             icons = settings.get('icons')
             if icons is None:
                 icons = {}
-                icons['enable'] = true
+                icons['enable'] = True
             if icons['enable'] is None or icons['enable'] not in (True, False):
-                icons['enable'] = true
+                icons['enable'] = True
                 settings.clear_on_change('icons')
                 settings.set('icons', icons)
                 sublime.save_settings(package_settings)
